@@ -1,44 +1,33 @@
-require('dotenv').config();
-const { Client, GatewayIntentBits } = require('discord.js');
+const { Client, GatewayIntentBits, Collection } = require('discord.js');
 const fs = require('fs');
 const path = require('path');
+require('dotenv').config();
 
-const client = new Client({ 
-    intents: [
-        GatewayIntentBits.Guilds,
-        GatewayIntentBits.GuildVoiceStates
-    ] 
-});
-client.commands = new Map();
+const TOKEN = process.env.TOKEN;
 
+const client = new Client({ intents: [GatewayIntentBits.Guilds, GatewayIntentBits.GuildVoiceStates] });
+
+client.commands = new Collection();
 const commandFiles = fs.readdirSync(path.join(__dirname, 'commands')).filter(file => file.endsWith('.js'));
+const downloadsDir = path.join(__dirname, './downloads');
+
+if (fs.existsSync(downloadsDir)) {
+    fs.rmSync(downloadsDir, { recursive: true, force: true });
+}
 
 for (const file of commandFiles) {
     const command = require(`./commands/${file}`);
-    client.commands.set(command.name, command);
-}
-
-const tempDir = path.join(__dirname, './temp');
-if(fs.existsSync(tempDir)){
-   fs.rmSync(tempDir, { recursive: true, force: true });
+    client.commands.set(command.data.name, command);
 }
 
 client.once('ready', () => {
-    console.log(`Bot online as ${client.user.tag}`);
+    console.log('Bot is ready!');
 });
 
 client.on('interactionCreate', async interaction => {
     if (!interaction.isCommand()) return;
-
     const command = client.commands.get(interaction.commandName);
-    if (!command) return;
-
-    try {
-        await command.execute(interaction);
-    } catch (error) {
-        console.error(error);
-        await interaction.reply("Error executing the command.");
-    }
+    if (command) await command.execute(interaction);
 });
 
-client.login(process.env.TOKEN);
+client.login(TOKEN);

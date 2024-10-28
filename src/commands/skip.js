@@ -1,21 +1,21 @@
-const { getVoiceConnection } = require('@discordjs/voice');
+const { SlashCommandBuilder } = require('discord.js');
+const audioQueue = require('../music/audioQueue');
 
 module.exports = {
-    name: 'skip',
-    description: 'Skip to the next music.',
-    
+    data: new SlashCommandBuilder()
+        .setName('skip')
+        .setDescription('Skips the current song'),
     async execute(interaction) {
-        const connection = getVoiceConnection(interaction.guildId);
-
-        if (!connection) {
-            return interaction.reply("I'm not connected to a voice channel.");
+        if (audioQueue.current && audioQueue.current.audioPlayer) {
+            audioQueue.current.audioPlayer.stop();
+            
+            if (audioQueue.queue.length > 0) {
+                interaction.reply({ content: `Playing the next song` });
+            } else {
+                interaction.reply({ content: 'No more songs in the queue.' });
+            }
+        } else {
+            interaction.reply({ content: 'No song is currently playing.', ephemeral: true });
         }
-        
-        const player = connection.state.subscription.player;
-        
-        if (!player) return interaction.reply("No music is being played for me to pause.");
-        
-        player.stop();
-        return await interaction.reply("Music skipped.");        
-    },
+    }
 };

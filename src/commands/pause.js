@@ -1,22 +1,16 @@
-const { getVoiceConnection } = require('@discordjs/voice');
+const { SlashCommandBuilder } = require('discord.js');
+const audioQueue = require('../music/audioQueue');
 
 module.exports = {
-    name: 'pause',
-    description: 'Pause the music that is playing.',
+    data: new SlashCommandBuilder()
+        .setName('pause')
+        .setDescription('Pauses the current song'),
     async execute(interaction) {
-        const connection = getVoiceConnection(interaction.guildId);
-
-        if (!connection) {
-            return interaction.reply("I'm not connected to a voice channel.");
-        }
-
-        const player = connection.state.subscription.player;
-
-        if (player && player.state.status === 'playing') {
-            player.pause();
-            return interaction.reply("Mucis paused.");
+        if (audioQueue.current && audioQueue.current.audioPlayer) {
+            audioQueue.current.audioPlayer.pause();
+            interaction.reply({ content: 'Paused the current song.' });
         } else {
-            return interaction.reply("No music is being played for me to pause.");
+            interaction.reply({ content: 'No song is currently playing.', ephemeral: true });
         }
-    },
+    }
 };

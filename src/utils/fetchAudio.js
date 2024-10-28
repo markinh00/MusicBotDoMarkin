@@ -1,50 +1,34 @@
+const fetch = require('node-fetch');
 const fs = require('fs');
 const path = require('path');
-const axios = require('axios');
+const { createAudioResource, createAudioPlayer } = require('@discordjs/voice');
 require('dotenv').config();
+const generateRandomName = require('./generateRandomName');
 
-async function fetchAudio(videoId) {
-    const url = `http://localhost:8000/${videoId}`;
+module.exports = async function fetchAudio(videoID) {
+    const audioFileName = generateRandomName() + '.mp3';
+    const downloadsDir = path.join(__dirname, '../downloads');
+    const filePath = path.resolve(downloadsDir, audioFileName);
+    const url = `http://localhost:8000/${videoID}/base64`;
 
-    const tempDir = path.join(__dirname, '../temp');
-    if (!fs.existsSync(tempDir)) {
-        fs.mkdirSync(tempDir, { recursive: true });
+    if (!fs.existsSync(downloadsDir)) {
+        fs.mkdirSync(downloadsDir);
     }
 
-    try {
-        const response = await axios.get(url, {
-            headers: {
-                'Accept': '*/*',
-                'X_API_Key': process.env.API_KEY,
-            },
-            responseType: 'stream',
-        });
+    const response = await fetch(url, {
+        headers: { 'X-API-Key': process.env.API_KEY }
+    });
 
-        if (response.status !== 200) throw new Error("Error while fetching audio.");
+    if (!response.ok) throw new Error('Failed to fetch audio');
 
-        const disposition = response.headers['content-disposition'];
-        let fileName = `${videoId}.mp3`;
+    const data = await response.json();
 
-        if (disposition) {
-            const matches = /filename="([^"]+)"/.exec(disposition);
-            if (matches && matches[1]) {
-                fileName = matches[1];
-            }
-        }
+    const base64String = data.file.replace(/b'|'/g, '');
+    const mp3Data = Buffer.from(base64String, 'base64');
+    fs.writeFileSync(filePath, mp3Data);
 
-        const filePath = path.join(tempDir, fileName);
-        const writer = fs.createWriteStream(filePath);
+    const audioResource = createAudioResource(filePath);
+    const audioPlayer = createAudioPlayer();
 
-        response.data.pipe(writer);
-
-        return new Promise((resolve, reject) => {
-            writer.on('finish', () => resolve(filePath));
-            writer.on('error', reject);
-        });
-    } catch (error) {
-        console.error(error);
-        throw new Error("Error during audio download.");
-    }
-}
-
-module.exports = fetchAudio;
+    return { title: data.title, audioPlayer, audioResource, filePath };
+};
