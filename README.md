@@ -32,3 +32,9 @@ now you need to create a new folder with the name ".env" and add the folowing va
 ```bash
   npm start
 ```
+
+## Commands
+- /play: requires a youtube link and plays a song or add a song to the playlist
+- /pause: pauses the current song
+- /resume: plays the song that was paused
+- /skip: skips to the next
