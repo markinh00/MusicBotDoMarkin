@@ -7,7 +7,7 @@ A discord bot for playing music with youtube links
 - [VSCode](https://code.visualstudio.com/)
 - [AudioDownloader](https://github.com/markinh00/AudioDownloader)
 
-## Instalation
+## Installation
 if you want to clone and run your own version of the project use the following the instructions for windows:
 
 ### Cloning the repository
