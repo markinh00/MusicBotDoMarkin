@@ -6,11 +6,6 @@ const validateYouTubeURL = require('../utils/validateYouTubeURL');
 const fs = require('fs');
 const path = require('path');
 
-async function isDirEmpty(dirname) {
-    const files = await fs.promises.readdir(dirname);
-    return files.length === 0;
-}
-
 module.exports = {
     data: new SlashCommandBuilder()
         .setName('play')
@@ -45,7 +40,7 @@ module.exports = {
             fs.mkdirSync(downloadsDir);
         }
 
-        if (!audioQueue.current || await isDirEmpty(downloadsDir)) {
+        if (!audioQueue.current) {
             audioQueue.current = track;
             interaction.reply({ content: `Playing: ${track.title}` });
             track.audioPlayer.play(track.audioResource);
